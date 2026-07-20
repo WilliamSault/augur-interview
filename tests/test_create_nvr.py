@@ -20,6 +20,10 @@ def test_rejects_duplicate_serial_number(client):
     )
 
     assert response.status_code == 409
+    assert (
+        response.json()["detail"]
+        == f"NVR with serial number {payload['serial_number']} already exists"
+    )
 
 
 @pytest.mark.parametrize(

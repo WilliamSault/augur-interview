@@ -41,8 +41,7 @@ def test_rejects_camera_when_nvr_does_not_exist(client):
     response = client.post("/cameras", json=payload)
 
     assert response.status_code == 404
-    # Distinguish a deliberate "NVR not found" from a missing route's 404.
-    assert "NVR" in response.json()["detail"]
+    assert response.json()["detail"] == f"NVR {payload['nvr_uuid']} not found"
 
 
 def test_rejects_duplicate_serial_number(client, existing_nvr):
@@ -56,6 +55,10 @@ def test_rejects_duplicate_serial_number(client, existing_nvr):
     response = client.post("/cameras", json=duplicate)
 
     assert response.status_code == 409
+    assert (
+        response.json()["detail"]
+        == f"Camera with serial number {payload['serial_number']} already exists"
+    )
 
 
 def test_rejects_serial_number_that_is_not_a_uuid(client, existing_nvr):
@@ -89,3 +92,7 @@ def test_rejects_camera_when_nvr_is_at_capacity(client):
 
     assert first.status_code == 201
     assert second.status_code == 409
+    assert (
+        second.json()["detail"]
+        == f"NVR {nvr['serial_number']} has no free input channels"
+    )

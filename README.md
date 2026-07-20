@@ -16,7 +16,35 @@ uv sync          # install dependencies into .venv
 uv run pytest    # run the test suite
 ```
 
-<!-- TODO before submission: server run command, seed script usage, API reference -->
+## Running the service
+
+```sh
+uv run uvicorn --factory app.main:app
+```
+
+The API is then available at `http://localhost:8000`, with interactive
+documentation at [http://localhost:8000/docs](http://localhost:8000/docs) —
+the easiest way to explore the endpoints from a browser.
+
+Data is stored in `nvr_metadata.db` in the working directory; set
+`NVR_DB_PATH` to use a different file. The database file is created on first
+run and survives restarts.
+
+Example requests:
+
+```sh
+# create an NVR
+curl -X POST localhost:8000/nvrs \
+  -H 'Content-Type: application/json' \
+  -d '{"make": "Hanwha Vision", "model": "QRN-1610S", "maximum_input_channels": 16, "serial_number": "a3f5e8d1-2c4b-4a9e-8f3d-1b5c7e9f2a4d"}'
+
+# attach a camera to it
+curl -X POST localhost:8000/cameras \
+  -H 'Content-Type: application/json' \
+  -d '{"make": "FLIR", "model": "A700-EST", "kind": "thermal", "serial_number": "f3c7e9a2-4d6b-4f8e-9c1a-7b5d3e8f2a4c", "location": "Building B", "nvr_uuid": "a3f5e8d1-2c4b-4a9e-8f3d-1b5c7e9f2a4d"}'
+```
+
+<!-- TODO before submission: seed script usage, API reference -->
 
 ## Open questions & assumptions
 
