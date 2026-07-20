@@ -1,12 +1,12 @@
 """API models. Field names and types follow the task specification."""
 
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
-class CameraKind(str, Enum):
+class CameraKind(StrEnum):
     ELECTRO_OPTICAL = "electro-optical"
     THERMAL = "thermal"
     INFRARED = "infrared"

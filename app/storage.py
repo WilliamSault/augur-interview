@@ -49,12 +49,18 @@ class Storage:
         try:
             with self._conn:
                 self._conn.execute(
-                    "INSERT INTO nvrs (serial_number, make, model, maximum_input_channels)"
+                    "INSERT INTO nvrs"
+                    " (serial_number, make, model, maximum_input_channels)"
                     " VALUES (?, ?, ?, ?)",
-                    (str(nvr.serial_number), nvr.make, nvr.model, nvr.maximum_input_channels),
+                    (
+                        str(nvr.serial_number),
+                        nvr.make,
+                        nvr.model,
+                        nvr.maximum_input_channels,
+                    ),
                 )
-        except sqlite3.IntegrityError:
-            raise DuplicateSerial("NVR", nvr.serial_number)
+        except sqlite3.IntegrityError as err:
+            raise DuplicateSerial("NVR", nvr.serial_number) from err
 
     def add_camera(self, camera: Camera) -> None:
         # Single transaction so the capacity check and insert are atomic.
@@ -62,8 +68,8 @@ class Storage:
             with self._conn:
                 row = self._conn.execute(
                     "SELECT maximum_input_channels,"
-                    " (SELECT COUNT(*) FROM cameras WHERE nvr_uuid = nvrs.serial_number)"
-                    " AS cameras_connected"
+                    " (SELECT COUNT(*) FROM cameras"
+                    "  WHERE nvr_uuid = nvrs.serial_number) AS cameras_connected"
                     " FROM nvrs WHERE serial_number = ?",
                     (str(camera.nvr_uuid),),
                 ).fetchone()
@@ -84,5 +90,5 @@ class Storage:
                         str(camera.nvr_uuid),
                     ),
                 )
-        except sqlite3.IntegrityError:
-            raise DuplicateSerial("Camera", camera.serial_number)
+        except sqlite3.IntegrityError as err:
+            raise DuplicateSerial("Camera", camera.serial_number) from err
