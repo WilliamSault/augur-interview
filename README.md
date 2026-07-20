@@ -44,7 +44,24 @@ curl -X POST localhost:8000/cameras \
   -d '{"make": "FLIR", "model": "A700-EST", "kind": "thermal", "serial_number": "f3c7e9a2-4d6b-4f8e-9c1a-7b5d3e8f2a4c", "location": "Building B", "nvr_uuid": "a3f5e8d1-2c4b-4a9e-8f3d-1b5c7e9f2a4d"}'
 ```
 
-<!-- TODO before submission: seed script usage, API reference -->
+## API
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/nvrs` | Create an NVR. `409` on duplicate serial. |
+| `GET` | `/nvrs` | List all NVRs. |
+| `DELETE` | `/nvrs/{serial_number}` | Delete an NVR. `409` while cameras are attached. |
+| `POST` | `/cameras` | Create a camera. `404` unknown NVR, `409` duplicate serial or NVR at capacity. |
+| `GET` | `/cameras` | List cameras. Optional filters `nvr_uuid`, `location`, `kind` (combine with AND). |
+| `DELETE` | `/cameras/{serial_number}` | Delete a camera. |
+
+The three read workflows from the task map onto `GET /cameras` filters:
+`?nvr_uuid=<uuid>` (cameras on an NVR), `?location=Building%20A` (cameras in
+a location), `?kind=thermal` (cameras of a kind).
+
+Full request/response schemas are on the interactive docs page at `/docs`.
+
+<!-- TODO before submission: seed script usage -->
 
 ## Open questions & assumptions
 

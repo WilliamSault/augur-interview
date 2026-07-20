@@ -11,7 +11,7 @@ from .exceptions import (
     NvrHasCameras,
     NvrNotFound,
 )
-from .models import Camera, Nvr
+from .models import Camera, CameraKind, Nvr
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS nvrs (
@@ -99,6 +99,28 @@ class Storage:
                 )
         except sqlite3.IntegrityError as err:
             raise DuplicateSerial("Camera", camera.serial_number) from err
+
+    def list_nvrs(self) -> list[Nvr]:
+        rows = self._conn.execute("SELECT * FROM nvrs").fetchall()
+        return [Nvr(**dict(row)) for row in rows]
+
+    def list_cameras(
+        self,
+        nvr_uuid: UUID | None = None,
+        location: str | None = None,
+        kind: CameraKind | None = None,
+    ) -> list[Camera]:
+        filters = {
+            "nvr_uuid": str(nvr_uuid) if nvr_uuid else None,
+            "location": location,
+            "kind": kind.value if kind else None,
+        }
+        active = {column: value for column, value in filters.items() if value}
+        query = "SELECT * FROM cameras"
+        if active:
+            query += " WHERE " + " AND ".join(f"{column} = ?" for column in active)
+        rows = self._conn.execute(query, tuple(active.values())).fetchall()
+        return [Camera(**dict(row)) for row in rows]
 
     def delete_nvr(self, serial_number: UUID) -> None:
         # Single transaction so the has-cameras check and delete are atomic.
