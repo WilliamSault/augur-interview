@@ -30,6 +30,16 @@ Data is stored in `nvr_metadata.db` in the working directory; set
 `NVR_DB_PATH` to use a different file. The database file is created on first
 run and survives restarts.
 
+### Sample data
+
+On first run (an empty database), the service seeds itself from
+`sample_nvr_camera_data.json`, so there is data to explore immediately.
+A database that already contains data is never seeded. Set `NVR_SEED_PATH`
+to seed from a different file, or to an empty string to disable seeding.
+
+Two of the five sample cameras are skipped with a logged warning — their
+serial numbers are not valid UUIDs (see assumption 1 below).
+
 Example requests:
 
 ```sh
@@ -61,7 +71,6 @@ a location), `?kind=thermal` (cameras of a kind).
 
 Full request/response schemas are on the interactive docs page at `/docs`.
 
-<!-- TODO before submission: seed script usage -->
 
 ## Open questions & assumptions
 
@@ -73,8 +82,8 @@ project these would be answered by gathering more information about the business
    UUIDs, but two cameras in `sample_nvr_camera_data.json` have serial numbers
    beginning `g4d8…` and `h5e9…` — `g` and `h` are not hexadecimal characters,
    so these are not valid UUIDs. **Decision:** serial numbers are strictly
-   validated as UUIDs per the spec; the seed script loads the three valid
-   cameras and reports the two it rejects.
+   validated as UUIDs per the spec; the first-run seeder loads the three
+   valid cameras and logs a warning for the two it rejects.
 
 2. **Deleting an NVR that still has cameras.** Cascade-delete the cameras,
    orphan them, or refuse? **Decision:** refuse with `409 Conflict` — the
