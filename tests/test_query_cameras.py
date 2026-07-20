@@ -100,6 +100,13 @@ def test_rejects_unknown_kind(client):
     assert response.status_code == 422
 
 
+def test_rejects_unknown_kind_with_valid_location(client):
+    response = client.get(
+        "/cameras", params={"location": "Building A", "kind": "ultraviolet"}
+    )
+    assert response.status_code == 422
+
+
 def test_rejects_nvr_uuid_that_is_not_a_uuid(client):
     response = client.get("/cameras", params={"nvr_uuid": "not-a-uuid"})
 
