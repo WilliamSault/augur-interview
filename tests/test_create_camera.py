@@ -1,7 +1,6 @@
 import uuid
 
 import pytest
-
 from factories import camera_payload, nvr_payload
 
 # Taken verbatim from sample_nvr_camera_data.json: "h" is not a hex

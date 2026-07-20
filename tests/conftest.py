@@ -1,8 +1,8 @@
 import pytest
+from factories import nvr_payload
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from factories import nvr_payload
 
 
 @pytest.fixture
