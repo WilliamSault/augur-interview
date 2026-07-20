@@ -2,8 +2,15 @@
 
 import sqlite3
 from pathlib import Path
+from uuid import UUID
 
-from .exceptions import DuplicateSerial, NvrAtCapacity, NvrNotFound
+from .exceptions import (
+    CameraNotFound,
+    DuplicateSerial,
+    NvrAtCapacity,
+    NvrHasCameras,
+    NvrNotFound,
+)
 from .models import Camera, Nvr
 
 SCHEMA = """
@@ -92,3 +99,26 @@ class Storage:
                 )
         except sqlite3.IntegrityError as err:
             raise DuplicateSerial("Camera", camera.serial_number) from err
+
+    def delete_nvr(self, serial_number: UUID) -> None:
+        # Single transaction so the has-cameras check and delete are atomic.
+        with self._conn:
+            attached = self._conn.execute(
+                "SELECT COUNT(*) FROM cameras WHERE nvr_uuid = ?",
+                (str(serial_number),),
+            ).fetchone()[0]
+            if attached:
+                raise NvrHasCameras(serial_number)
+            deleted = self._conn.execute(
+                "DELETE FROM nvrs WHERE serial_number = ?", (str(serial_number),)
+            ).rowcount
+            if not deleted:
+                raise NvrNotFound(serial_number)
+
+    def delete_camera(self, serial_number: UUID) -> None:
+        with self._conn:
+            deleted = self._conn.execute(
+                "DELETE FROM cameras WHERE serial_number = ?", (str(serial_number),)
+            ).rowcount
+            if not deleted:
+                raise CameraNotFound(serial_number)

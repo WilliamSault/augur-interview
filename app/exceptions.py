@@ -22,6 +22,20 @@ class NvrNotFound(DomainError):
         super().__init__(f"NVR {serial_number} not found")
 
 
+class CameraNotFound(DomainError):
+    status_code = 404
+
+    def __init__(self, serial_number: UUID):
+        super().__init__(f"Camera {serial_number} not found")
+
+
+class NvrHasCameras(DomainError):
+    status_code = 409
+
+    def __init__(self, serial_number: UUID):
+        super().__init__(f"NVR {serial_number} still has cameras attached")
+
+
 class DuplicateSerial(DomainError):
     status_code = 409
 
