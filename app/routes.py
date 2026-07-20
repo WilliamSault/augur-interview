@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from contextlib import closing
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 
@@ -26,3 +27,13 @@ def create_nvr(nvr: Nvr, storage: Storage = Depends(get_storage)) -> Nvr:
 def create_camera(camera: Camera, storage: Storage = Depends(get_storage)) -> Camera:
     storage.add_camera(camera)
     return camera
+
+
+@router.delete("/nvrs/{serial_number}", status_code=204)
+def delete_nvr(serial_number: UUID, storage: Storage = Depends(get_storage)) -> None:
+    storage.delete_nvr(serial_number)
+
+
+@router.delete("/cameras/{serial_number}", status_code=204)
+def delete_camera(serial_number: UUID, storage: Storage = Depends(get_storage)) -> None:
+    storage.delete_camera(serial_number)
