@@ -4,7 +4,7 @@ A small REST service for storing and retrieving metadata about Network Video
 Recorders (NVRs) and the cameras connected to them.
 
 **Stack:** Python / FastAPI / SQLite (stdlib `sqlite3`), managed with [uv](https://docs.astral.sh/uv/),
-tested with pytest. SQLite keeps the service fully local — persistence is a
+tested with pytest. SQLite keeps the service fully local: persistence is a
 single database file, with no external database server to install or run.
 
 ## Getting started
@@ -23,7 +23,7 @@ uv run uvicorn --factory app.main:app
 ```
 
 The API is then available at `http://localhost:8000`, with interactive
-documentation at [http://localhost:8000/docs](http://localhost:8000/docs) —
+documentation at [http://localhost:8000/docs](http://localhost:8000/docs),
 the easiest way to explore the endpoints from a browser.
 
 Data is stored in `nvr_metadata.db` in the working directory; set
@@ -37,7 +37,7 @@ On first run (an empty database), the service seeds itself from
 A database that already contains data is never seeded. Set `NVR_SEED_PATH`
 to seed from a different file, or to an empty string to disable seeding.
 
-Two of the five sample cameras are skipped with a logged warning — their
+Two of the five sample cameras are skipped with a logged warning; their
 serial numbers are not valid UUIDs (see assumption 1 below).
 
 Example requests:
@@ -75,23 +75,23 @@ Full request/response schemas are on the interactive docs page at `/docs`.
 ## Open questions & assumptions
 
 The task description leaves a few behaviours unspecified. Rather than guess
-silently, the decisions taken (and the reasoning) are recorded here — in a real
+silently, the decisions taken (and the reasoning) are recorded here; in a real
 project these would be answered by gathering more information about the business requirements.
 
 1. **Invalid UUIDs in the sample data.** The spec types serial numbers as
    UUIDs, but two cameras in `sample_nvr_camera_data.json` have serial numbers
-   beginning `g4d8…` and `h5e9…` — `g` and `h` are not hexadecimal characters,
+   beginning `g4d8…` and `h5e9…`; `g` and `h` are not hexadecimal characters,
    so these are not valid UUIDs. **Decision:** serial numbers are strictly
    validated as UUIDs per the spec; the first-run seeder loads the three
    valid cameras and logs a warning for the two it rejects.
 
 2. **Deleting an NVR that still has cameras.** Cascade-delete the cameras,
-   orphan them, or refuse? **Decision:** refuse with `409 Conflict` — the
+   orphan them, or refuse? **Decision:** refuse with `409 Conflict` the
    caller must delete (or re-home) the cameras first. Explicit beats
    destructive.
 
 3. **Referential integrity on camera creation.** May a camera reference an
-   NVR that hasn't been created? **Decision:** no — creating a camera with an
+   NVR that hasn't been created? **Decision:** no, creating a camera with an
    unknown `nvr_uuid` returns `404`. NVRs must be created first; they are never
    created implicitly.
 
@@ -101,7 +101,7 @@ project these would be answered by gathering more information about the business
    consume several). Creating a camera on a full NVR returns `409 Conflict`.
 
 5. **No update workflow.** The spec asks for create, delete, and three read
-   queries — no update. **Decision:** PUT/PATCH endpoints are intentionally
+   queries and no update. **Decision:** PUT/PATCH endpoints are intentionally
    omitted rather than forgotten; moving a camera between NVRs is
    delete-and-recreate. Easy to add if required.
 
@@ -110,13 +110,24 @@ project these would be answered by gathering more information about the business
    matching would be a product decision for the customer.
 
 7. **Filters that match nothing.** Querying cameras for an unknown NVR,
-   location, or kind returns `200` with an empty array, not `404` — a filter
+   location, or kind returns `200` with an empty array, not `404` so a filter
    with no matches is a valid question with an empty answer, not an error.
    *(Assumed, not specified.)*
 
 8. **Listing endpoints.** Only the three camera queries are required, but a
-   plain "list all NVRs / cameras" endpoint is included as a convenience —
+   plain "list all NVRs / cameras" endpoint is included as a convenience as
    without it there is no way to discover what the service holds.
 
 9. **Security & concurrency.** No authentication; the service assumes a
    single trusted client on a local machine, per the scope of the task.
+
+10. **Serial numbers are client-supplied identifiers.** The spec never says
+    who generates serials. **Assumption:** they come from the physical
+    hardware, so the client supplies them and they act as primary keys,
+    creating a second record with an existing serial returns `409 Conflict`
+    rather than silently overwriting.
+
+11. **First-run seeding.** The spec ships sample data but never says to load
+    it. **Decision:** an empty database seeds itself from the sample file so
+    the service is explorable immediately, and invalid records are skipped
+    with a warning rather than aborting the whole seed. See "Sample data" above.
